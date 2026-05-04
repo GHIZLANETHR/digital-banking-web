@@ -1,0 +1,37 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-4">
+
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white text-center">
+          <h4>🏦 E-Banking Login</h4>
+        </div>
+        <div class="card-body">
+
+          <div *ngIf="errorMessage" class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+
+          <form [formGroup]="formLogin" (ngSubmit)="handleLogin()">
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input type="text" formControlName="username"
+                     class="form-control" placeholder="admin ou user1"/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" formControlName="password"
+                     class="form-control" placeholder="12345"/>
+            </div>
+            <button type="submit" class="btn btn-primary w-100"
+                    [disabled]="formLogin.invalid">
+              Se connecter
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
