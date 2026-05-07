@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -20,17 +21,24 @@ import { AuthInterceptorService } from './services/auth-interceptor.service';
     CustomersComponent,
     AccountsComponent,
     NewCustomerComponent,
-    CustomerAccountsComponent, // ← ajouté
+    CustomerAccountsComponent,
+    LoginComponent        // ← déplacé ici dans declarations
   ],
-  imports: [BrowserModule, AppRoutingModule, HttpClientModule, ReactiveFormsModule, LoginComponent],
+  imports: [
+    BrowserModule,
+    CommonModule,         // ← pour *ngIf
+    AppRoutingModule,
+    HttpClientModule,
+    ReactiveFormsModule
+    // ← LoginComponent retiré d'ici
+  ],
   providers: [
-    // ← intercepteur ajouté
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptorService,
-      multi: true,
-    },
+      multi: true
+    }
   ],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule {}
