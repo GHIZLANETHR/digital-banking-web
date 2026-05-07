@@ -1,0 +1,20 @@
+<div class="container mt-3">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card text-white bg-primary mb-3"><div class="card-body"><h5>Total Customers</h5><h2>{{stats?.totalCustomers}}</h2></div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-success mb-3"><div class="card-body"><h5>Total Accounts</h5><h2>{{stats?.totalAccounts}}</h2></div></div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-info mb-3"><div class="card-body"><h5>Total Balance</h5><h2>{{stats?.totalBalance | currency}}</h2></div></div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6"><canvas id="pieChart"></canvas></div>
+    <div class="col-md-6"><canvas id="lineChart"></canvas></div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-6"><div class="card"><div class="card-body">Debit count: {{stats?.debitCount}}<br>Credit count: {{stats?.creditCount}}</div></div></div>
+  </div>
+</div>

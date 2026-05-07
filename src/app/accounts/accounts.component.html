@@ -1,92 +1,100 @@
 <div class="container mt-2">
   <div class="row">
-    <div class="col col-md-6">
+    <!-- Colonne gauche : consultation d'un compte spécifique + opérations -->
+    <div class="col-md-6">
       <div class="card">
-        <div class="card-header">Accounts</div>
+        <div class="card-header">Account Details & Operations</div>
         <div class="card-body">
           <form [formGroup]="accountFormGroup" (ngSubmit)="handleSearchAccount()">
             <div class="input-group">
               <label class="input-group-text">Account Id :</label>
               <input type="text" formControlName="accountId" class="form-control">
-              <button class="btn btn-info">
-                <i class="bi bi-search"></i>
-                Search
-              </button>
+              <button class="btn btn-info"><i class="bi bi-search"></i> Search</button>
             </div>
           </form>
-          <ng-template #errorTemplate>
-            <ng-container *ngIf="errorMessage ; else loading">
-              <div class="text-danger">{{errorMessage}}</div>
-            </ng-container>
-            <ng-template #loading>
-              Loading ...
-            </ng-template>
-          </ng-template>
-          <ng-container *ngIf="accountObservable | async as accountDetails">
-            <div class="mb-2">
-              <label>Account ID :</label>
-              <label><strong>{{accountDetails.accountId}}</strong></label>
-            </div>
-            <div class="mb-2">
-              <label>Balance :</label>
-              <label><strong>{{accountDetails.balance | number : '1.2-2'}}</strong></label>
-            </div>
-            <table class="table">
-              <thead>
-              <th>ID</th><th>Date</th><th>Type</th><th>Amount</th>
-              </thead>
+          <div *ngIf="accountDetails$ | async as accountDetails">
+            <div><strong>Balance:</strong> {{accountDetails.balance | currency}}</div>
+            <table class="table table-sm mt-2">
+              <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
               <tbody>
               <tr *ngFor="let op of accountDetails.accountOperationDTOS">
-                <td>{{op.id}}</td>
-                <td>{{op.operationDate | date : 'dd-MM-yyyy:HH-mm-ss'}}</td>
-                <td>{{op.type}}</td>
-                <td class="text-end">{{op.amount | number : '1.2-2'}}</td>
+                <td>{{op.id}}</td><td>{{op.operationDate | date:'short'}}</td><td>{{op.type}}</td><td>{{op.amount | currency}}</td>
               </tr>
               </tbody>
             </table>
             <ul class="nav nav-pills">
-              <li *ngFor="let item of [].constructor(accountDetails.totalPages);let page=index">
-                <a [ngClass]="page==currentPage?'btn-info':'btn-outline-info'" (click)="gotoPage(page)" class="btn  ms-1 mt-1">{{page}}</a>
+              <li *ngFor="let item of [].constructor(accountDetails.totalPages); let page=index">
+                <a [ngClass]="page==currentPage?'btn-info':'btn-outline-info'" (click)="gotoPage(page)" class="btn ms-1 mt-1">{{page}}</a>
               </li>
             </ul>
-          </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">New Operation</div>
+        <div class="card-body">
+          <form [formGroup]="operationFormGroup">
+            <div class="mb-2">
+              <label>Type</label><br>
+              <input type="radio" formControlName="operationType" value="DEBIT"> Debit
+              <input type="radio" formControlName="operationType" value="CREDIT" class="ms-2"> Credit
+              <input type="radio" formControlName="operationType" value="TRANSFER" class="ms-2"> Transfer
+            </div>
+            <div *ngIf="operationFormGroup.value.operationType=='TRANSFER'" class="mb-2">
+              <label>Destination Account</label>
+              <input type="text" formControlName="accountDestination" class="form-control">
+            </div>
+            <div class="mb-2">
+              <label>Amount</label>
+              <input type="number" formControlName="amount" class="form-control">
+            </div>
+            <div class="mb-2">
+              <label>Description</label>
+              <input type="text" formControlName="description" class="form-control">
+            </div>
+            <button class="btn btn-success" (click)="handleAccountOperation()">Execute</button>
+          </form>
         </div>
       </div>
     </div>
-    <div class="col col-md-6">
-      <div class="card" *ngIf="accountObservable">
-        <div class="card-header">Operations</div>
-        <div class="card-body">
 
-          <form [formGroup]="operationFromGroup" (ngSubmit)="handleAccountOperation()" method="post">
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" formControlName="operationType" value="DEBIT">
-              <label class="form-check-label">DEBIT:</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" formControlName="operationType" value="CREDIT">
-              <label class="form-check-label">CREDIT:</label>
-            </div>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" formControlName="operationType" value="TRANSFER">
-              <label class="form-check-label">TRANSFER:</label>
-            </div>
-            <div class="mb-3" *ngIf="operationFromGroup.value.operationType=='TRANSFER'">
-              <label class="form-label">Account Destination :</label>
-              <input type="text" formControlName="accountDestination" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Amount :</label>
-              <input type="text" formControlName="amount" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Description :</label>
-              <input type="text" formControlName="description" class="form-control">
-            </div>
-            <div class="d-grid mb-3">
-              <button class="btn btn-success">Save Operation</button>
+    <!-- Colonne droite : administration des comptes (recherche avancée, suppression) -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">Account Administration</div>
+        <div class="card-body">
+          <form [formGroup]="searchFormGroup" (ngSubmit)="advancedSearch()">
+            <div class="row">
+              <div class="col"><input placeholder="Keyword (ID or customer name)" formControlName="keyword" class="form-control"></div>
+              <div class="col">
+                <select formControlName="type" class="form-select">
+                  <option value="">All types</option>
+                  <option value="CurrentAccount">Current</option>
+                  <option value="SavingAccount">Saving</option>
+                </select>
+              </div>
+              <div class="col">
+                <select formControlName="status" class="form-select">
+                  <option value="">All status</option>
+                  <option value="CREATED">Created</option>
+                  <option value="ACTIVATED">Activated</option>
+                  <option value="SUSPENDED">Suspended</option>
+                </select>
+              </div>
+              <div class="col"><button class="btn btn-primary">Search</button></div>
             </div>
           </form>
+          <table class="table table-sm mt-3">
+            <thead><tr><th>ID</th><th>Type</th><th>Balance</th><th>Status</th><th>Customer</th><th>Action</th></tr></thead>
+            <tbody>
+            <tr *ngFor="let acc of accounts$ | async">
+              <td>{{acc.id}}</td><td>{{acc.type}}</td><td>{{acc.balance | currency}}</td><td>{{acc.status}}</td>
+              <td>{{acc.customerDTO?.name}}</td>
+              <td><button class="btn btn-danger btn-sm" (click)="deleteAccount(acc.id)">Delete</button></td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

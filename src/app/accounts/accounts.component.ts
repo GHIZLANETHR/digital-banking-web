@@ -1,92 +1,89 @@
+// accounts.component.ts
 import { Component, OnInit } from '@angular/core';
-import {FormBuilder, FormGroup} from "@angular/forms";
-import {AccountsService} from "../services/accounts.service";
-import {catchError, Observable, throwError} from "rxjs";
-import {AccountDetails} from "../model/account.model";
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { AccountsService } from '../services/accounts.service';
+import { AccountDetails, BankAccount } from '../model/account.model';
+import { catchError, Observable, throwError } from 'rxjs';
 
 @Component({
   selector: 'app-accounts',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './accounts.component.html',
   styleUrls: ['./accounts.component.css']
 })
 export class AccountsComponent implements OnInit {
-  accountFormGroup! : FormGroup;
-  currentPage : number =0;
-  pageSize : number =5;
-  accountObservable! : Observable<AccountDetails>
-  operationFromGroup! : FormGroup;
-  errorMessage! :string ;
+  accountFormGroup!: FormGroup;
+  searchFormGroup!: FormGroup;
+  currentPage = 0;
+  pageSize = 5;
+  accountDetails$!: Observable<AccountDetails>;
+  accounts$!: Observable<BankAccount[]>;
+  errorMessage = '';
+  operationFormGroup!: FormGroup;
 
-  constructor(private fb : FormBuilder, private accountService : AccountsService) { }
+  constructor(private fb: FormBuilder, private accountService: AccountsService) { }
 
   ngOnInit(): void {
-    this.accountFormGroup=this.fb.group({
-      accountId : this.fb.control('')
+    this.accountFormGroup = this.fb.group({ accountId: [''] });
+    this.searchFormGroup = this.fb.group({ keyword: [''], type: [''], status: [''] });
+    this.operationFormGroup = this.fb.group({
+      operationType: [null],
+      amount: [0],
+      description: [''],
+      accountDestination: ['']
     });
-    this.operationFromGroup=this.fb.group({
-      operationType : this.fb.control(null),
-      amount : this.fb.control(0),
-      description : this.fb.control(null),
-      accountDestination : this.fb.control(null)
-    })}
+    this.loadAllAccounts();
+  }
+
+  loadAllAccounts() {
+    this.accounts$ = this.accountService.getAllAccounts().pipe(
+      catchError(err => { this.errorMessage = err.message; return throwError(err); })
+    );
+  }
 
   handleSearchAccount() {
-    let accountId : string =this.accountFormGroup.value.accountId;
-    this.accountObservable=this.accountService.getAccount(accountId,this.currentPage, this.pageSize).pipe(
-      catchError(err => {
-        this.errorMessage=err.message;
-        return throwError(err);
-      })
+    let accountId = this.accountFormGroup.value.accountId;
+    this.accountDetails$ = this.accountService.getAccount(accountId, this.currentPage, this.pageSize).pipe(
+      catchError(err => { this.errorMessage = err.message; return throwError(err); })
     );
   }
 
   gotoPage(page: number) {
-    this.currentPage=page;
+    this.currentPage = page;
     this.handleSearchAccount();
   }
 
   handleAccountOperation() {
-    let accountId :string = this.accountFormGroup.value.accountId;
-    let operationType=this.operationFromGroup.value.operationType;
-    let amount :number =this.operationFromGroup.value.amount;
-    let description :string =this.operationFromGroup.value.description;
-    let accountDestination :string =this.operationFromGroup.value.accountDestination;
-    if(operationType=='DEBIT'){
-      this.accountService.debit(accountId, amount,description).subscribe({
-        next : (data)=>{
-          alert("Success Credit");
-          this.operationFromGroup.reset();
-          this.handleSearchAccount();
-        },
-        error : (err)=>{
-          console.log(err);
-        }
+    let accountId = this.accountFormGroup.value.accountId;
+    let op = this.operationFormGroup.value;
+    if (op.operationType === 'DEBIT') {
+      this.accountService.debit(accountId, op.amount, op.description).subscribe(() => {
+        alert('Debit success');
+        this.handleSearchAccount();
       });
-    } else if(operationType=='CREDIT'){
-      this.accountService.credit(accountId, amount,description).subscribe({
-        next : (data)=>{
-          alert("Success Debit");
-          this.operationFromGroup.reset();
-          this.handleSearchAccount();
-        },
-        error : (err)=>{
-          console.log(err);
-        }
+    } else if (op.operationType === 'CREDIT') {
+      this.accountService.credit(accountId, op.amount, op.description).subscribe(() => {
+        alert('Credit success');
+        this.handleSearchAccount();
+      });
+    } else if (op.operationType === 'TRANSFER') {
+      this.accountService.transfer(accountId, op.accountDestination, op.amount, op.description).subscribe(() => {
+        alert('Transfer success');
+        this.handleSearchAccount();
       });
     }
-    else if(operationType=='TRANSFER'){
-      this.accountService.transfer(accountId,accountDestination, amount,description).subscribe({
-        next : (data)=>{
-          alert("Success Transfer");
-          this.operationFromGroup.reset();
-          this.handleSearchAccount();
-        },
-        error : (err)=>{
-          console.log(err);
-        }
-      });
+  }
 
+  advancedSearch() {
+    let { keyword, type, status } = this.searchFormGroup.value;
+    this.accounts$ = this.accountService.searchAccounts(keyword, type, status);
+  }
+
+  deleteAccount(accountId: string) {
+    if (confirm('Delete this account?')) {
+      this.accountService.deleteAccount(accountId).subscribe(() => this.loadAllAccounts());
     }
   }
 }

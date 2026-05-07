@@ -1,4 +1,59 @@
-<div class="container">
-  <div>{{customerId}}</div>
-  <div>{{customer | json}}</div>
+<div class="container mt-3">
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h4>Accounts of {{ customer?.name }}</h4>
+    </div>
+    <div class="card-body">
+      <button class="btn btn-success mb-3" (click)="openCreateForm()">+ New Account</button>
+
+      <div *ngIf="showForm" class="card mb-3">
+        <div class="card-body">
+          <form [formGroup]="accountForm">
+            <div class="row">
+              <div class="col-md-3">
+                <label>Type</label>
+                <select formControlName="type" class="form-select">
+                  <option value="CURRENT">Current Account</option>
+                  <option value="SAVING">Saving Account</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label>Initial Balance</label>
+                <input formControlName="initialBalance" type="number" class="form-control">
+              </div>
+              <div class="col-md-3" *ngIf="accountForm.value.type === 'CURRENT'">
+                <label>Overdraft</label>
+                <input formControlName="overDraft" type="number" class="form-control">
+              </div>
+              <div class="col-md-3" *ngIf="accountForm.value.type === 'SAVING'">
+                <label>Interest Rate (%)</label>
+                <input formControlName="interestRate" type="number" class="form-control">
+              </div>
+              <div class="col-md-3 align-self-end">
+                <button class="btn btn-primary" (click)="saveAccount()">Save</button>
+                <button class="btn btn-secondary ms-2" (click)="showForm=false">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <table class="table table-bordered">
+        <thead>
+        <tr><th>ID</th><th>Type</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let acc of accounts">
+          <td>{{acc.id}}</td>
+          <td>{{acc.type}}</td>
+          <td>{{acc.balance | currency}}</td>
+          <td>{{acc.status}}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" (click)="deleteAccount(acc.id)">Delete</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
